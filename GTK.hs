@@ -11,7 +11,7 @@ import Foreign.Ptr
 import Graphics.Rendering.Cairo
 
 data Input = Input
-    { inputImage :: String
+    { image :: String
     } deriving (Show, Generic)
 
 instance FromJSON Input
@@ -22,7 +22,7 @@ main = do
     inputString <- getContents
     case eitherDecode $ B.pack inputString :: Either String Input of
         Left e -> putStrLn e
-        Right input@(Input { inputImage = path }) -> do
+        Right input@(Input { image = path }) -> do
             print input
             pixbuf <- pixbufNewFromFile path
             pb <- newIORef pixbuf
