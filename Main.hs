@@ -46,7 +46,7 @@ mainWindow continue file = do
             "c" -> liftIO $ do
                 let colsToHull colsRef = do
                     cols <- readIORef colsRef
-                    let rgbaToColorList (r, g, b, a) = map (\c -> fromIntegral c / 255) [r, g, b, a]
+                    let rgbaToColorList (r, g, b, a) = map (\c -> fromIntegral c / 255) [r, g, b]
                     let points = V.fromList $ map (V.fromList . rgbaToColorList) $ S.toList cols
                     return $ qhull' points
                 fgm <- colsToHull fgs
