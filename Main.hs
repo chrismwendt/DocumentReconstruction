@@ -49,14 +49,14 @@ mainWindow continue file = do
                     cols <- readIORef colsRef
                     let rgbaToColorList (r, g, b, a) = map (\c -> fromIntegral c / 255) [r, g, b]
                     let points = V.fromList $ map (V.fromList . rgbaToColorList) $ S.toList cols
-                    return $ qhull' points
-                fgm <- colsToHull fgs
+                    return $ (points, qhull' points)
+                (fgPoints, fgm) <- colsToHull fgs
                 case fgm of
                     Left fgHull -> do
-                        bgm <- colsToHull bgs
+                        (bgPoints, bgm) <- colsToHull bgs
                         case bgm of
                             Left bgHull -> do
-                                subtractBG pb fgHull bgHull >>= continue
+                                subtractBG pb (toTriangles fgPoints fgHull) (toTriangles bgPoints bgHull) >>= continue
                             Right e -> putStrLn $ errorMessage e
                     Right e -> putStrLn $ errorMessage e
 
@@ -66,6 +66,8 @@ mainWindow continue file = do
 subtractBG pb fgHull bgHull = do
     U.pixbufMap pb (\(r, g, b, a) -> let (r', g', b') = modifyColor (r, g, b); a' = modifyAlpha (r, g, b) in (r', g', b', a'))
     return pb
+
+toTriangles points hull = map (\v -> (points V.! (v V.! 0), points V.! (v V.! 1), points V.! (v V.! 2))) $ map V.convert $ hull
 
 modifyColor (r, g, b) = (r `div` 2, g, b)
 
