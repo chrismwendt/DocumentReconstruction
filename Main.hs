@@ -13,12 +13,12 @@ import qualified Utility as U
 
 main = do
     initGUI
-    getArgs >>= mainWindow next . head
+    getArgs >>= (mainWindow $ next $ (const $ (return () :: IO ()))) . head
     mainGUI
 
-next pb = do
+next continue pb = do
     w <- U.showImage pb
-    return ()
+    continue ()
 
 mainWindow continue file = do
     pb <- pixbufNewFromFile file
