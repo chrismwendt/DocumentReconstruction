@@ -34,7 +34,7 @@ mainWindow continue file = do
         (pw, ph) <- liftIO $ U.pixbufSize pb
         ms <- eventModifierAll
         liftIO $ sample (if Button1 `elem` ms then fgs else bgs) pb pw ph (floor x) (floor y)
-        return False
+        return True
 
     w `on` keyPressEvent $ do
         k <- eventKeyName
@@ -62,7 +62,7 @@ mainWindow continue file = do
                     Right e -> putStrLn $ errorMessage e
 
             _ -> liftIO $ print "Only f, b, and c keys are supported."
-        return False
+        return True
 
 subtractBG :: Pixbuf -> [(V3.Vec, V3.Vec, V3.Vec)] -> [(V3.Vec, V3.Vec, V3.Vec)] -> IO Pixbuf
 subtractBG pb fgHull bgHull = do
