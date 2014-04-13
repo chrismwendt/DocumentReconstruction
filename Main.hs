@@ -17,6 +17,8 @@ main = do
     getArgs >>= (mainWindow $ next $ (const $ (return () :: IO ()))) . head
     mainGUI
 
+type Triangle = (V3.Vec, V3.Vec, V3.Vec)
+
 next continue pb = do
     w <- U.showImage pb
     continue ()
@@ -59,7 +61,7 @@ mainWindow continue file = do
             _ -> liftIO $ print "Only f, b, and c keys are supported."
         return True
 
-subtractBG :: Pixbuf -> [(V3.Vec, V3.Vec, V3.Vec)] -> [(V3.Vec, V3.Vec, V3.Vec)] -> IO Pixbuf
+subtractBG :: Pixbuf -> [Triangle] -> [Triangle] -> IO Pixbuf
 subtractBG pb fgHull bgHull = do
     U.pixbufMap pb f
     return pb
@@ -69,7 +71,7 @@ subtractBG pb fgHull bgHull = do
         a' = modifyAlpha (fromIntegral r / 255, fromIntegral g / 255, fromIntegral b / 255) fgHull bgHull
         in (r', g', b', a')
 
-toTriangles :: V.Vector V3.Vec -> [V.Vector Int] -> [(V3.Vec, V3.Vec, V3.Vec)]
+toTriangles :: V.Vector V3.Vec -> [V.Vector Int] -> [Triangle]
 toTriangles points hull = map (\t -> (points V.! (t V.! 0), points V.! (t V.! 1), points V.! (t V.! 2))) hull
 
 front p (a, b, c) = (p `V3.vsub` a) `V3.vdot` normal > 0
