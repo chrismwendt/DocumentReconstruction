@@ -19,6 +19,13 @@ main = do
 
 type Triangle = (V3.Vec, V3.Vec, V3.Vec)
 
+mapTriangle f (a, b, c) = (f a, f b, f c)
+
+triangleToList (a, b, c) = [a, b, c]
+
+averagePoint :: [V3.Vec] -> V3.Vec
+averagePoint ps = let f c = sum (map c ps) / (fromIntegral $ length ps) in V3.Vec (f V3.x) (f V3.y) (f V3.z)
+
 next continue pb = do
     w <- U.showImage pb
     continue ()
@@ -49,10 +56,16 @@ keyPressed continue pb fgs bgs "c" = do
             (bgPoints, bgm) <- colsToHull bgs
             case bgm of
                 Left bgHull -> do
-                    subtractBG pb (toTriangles fgPoints (map V.convert fgHull)) (toTriangles bgPoints (map V.convert bgHull)) >>= continue
+                    let rawFGHull = toTriangles fgPoints (map V.convert fgHull)
+                    let rawBGHull = toTriangles fgPoints (map V.convert bgHull)
+                    let lFGHull = map (mapTriangle (explode 1.2 (averagePoint (concatMap triangleToList rawFGHull)))) rawFGHull
+                    let lBGHull = map (mapTriangle (explode 1.2 (averagePoint (concatMap triangleToList rawBGHull)))) rawBGHull
+                    subtractBG pb lFGHull lBGHull >>= continue
                 Right e -> putStrLn $ errorMessage e
         Right e -> putStrLn $ errorMessage e
 keyPressed continue pb fgs bgs _ = print "Only f, b, and c keys are supported."
+
+explode t origin point = origin `V3.vadd` ((point `V3.vsub` origin) `V3.vscale` t)
 
 subtractBG :: Pixbuf -> [Triangle] -> [Triangle] -> IO Pixbuf
 subtractBG pb fgHull bgHull = do
