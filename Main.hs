@@ -29,12 +29,7 @@ mainWindow continue file = do
     w <- U.showImage pb
     widgetAddEvents w [Button1MotionMask, Button3MotionMask]
 
-    w `on` motionNotifyEvent $ do
-        (x, y) <- eventCoordinates
-        (pw, ph) <- liftIO $ U.pixbufSize pb
-        ms <- eventModifierAll
-        liftIO $ sample (if Button1 `elem` ms then fgs else bgs) pb pw ph (floor x) (floor y)
-        return True
+    w `on` motionNotifyEvent $ pickSample fgs bgs pb >> return True
 
     w `on` keyPressEvent $ do
         k <- eventKeyName
@@ -87,12 +82,18 @@ modifyColor (r, g, b) = (r, g, b)
 
 modifyAlpha (r, g, b) fgHull bgHull = if all (front (V3.Vec r g b)) fgHull then 255 else 0
 
-sample setRef pb pw ph x y
-    | x < 0 || y < 0 || x >= pw || y >= ph = return ()
+pickSample fgs bgs pb = do
+    (x, y) <- eventCoordinates
+    ms <- eventModifierAll
+    liftIO $ do
+        (pw, ph) <- U.pixbufSize pb
+        let s a = readIORef a >>= sample pb pw ph (floor x) (floor y) >>= writeIORef a
+        when (Button1 `elem` ms) $ s fgs
+        when (Button3 `elem` ms) $ s bgs
+
+sample pb pw ph x y set
+    | x < 0 || y < 0 || x >= pw || y >= ph = return set
     | otherwise = do
-        s <- readIORef setRef
         rgba <- U.getRGBA pb x y
-        if S.notMember rgba s
-            then print rgba
-            else return ()
-        modifyIORef setRef $ S.insert rgba
+        when (S.notMember rgba set) $ print rgba
+        return $ S.insert rgba set
