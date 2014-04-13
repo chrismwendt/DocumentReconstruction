@@ -58,8 +58,8 @@ keyPressed continue pb fgs bgs "c" = do
                 Left bgHull -> do
                     let rawFGHull = toTriangles fgPoints (map V.convert fgHull)
                     let rawBGHull = toTriangles fgPoints (map V.convert bgHull)
-                    let lFGHull = map (mapTriangle (explode 1.2 (averagePoint (concatMap triangleToList rawFGHull)))) rawFGHull
-                    let lBGHull = map (mapTriangle (explode 1.2 (averagePoint (concatMap triangleToList rawBGHull)))) rawBGHull
+                    let lFGHull = map (mapTriangle (explode 1.5 (averagePoint (concatMap triangleToList rawFGHull)))) rawFGHull
+                    let lBGHull = map (mapTriangle (explode 1.5 (averagePoint (concatMap triangleToList rawBGHull)))) rawBGHull
                     subtractBG pb lFGHull lBGHull >>= continue
                 Right e -> putStrLn $ errorMessage e
         Right e -> putStrLn $ errorMessage e
