@@ -33,33 +33,26 @@ mainWindow continue file = do
 
     w `on` motionNotifyEvent $ pickSample fgs bgs pb >> return True
 
-    w `on` keyPressEvent $ do
-        k <- eventKeyName
-        case k of
-            "f" -> liftIO $ do
-                s <- readIORef fgs
-                print s
-            "b" -> liftIO $ do
-                s <- readIORef bgs
-                print s
-            "c" -> liftIO $ do
-                let colsToHull colsRef = do
-                    cols <- readIORef colsRef
-                    let rgbaToColorList (r, g, b, a) = map (\c -> fromIntegral c / 255) [r, g, b]
-                    let points = V.fromList $ map (V.fromList . rgbaToColorList) $ S.toList cols
-                    return $ (V.map (\v -> V3.Vec (v V.! 0) (v V.! 1) (v V.! 2)) points, qhull' points)
-                (fgPoints, fgm) <- colsToHull fgs
-                case fgm of
-                    Left fgHull -> do
-                        (bgPoints, bgm) <- colsToHull bgs
-                        case bgm of
-                            Left bgHull -> do
-                                subtractBG pb (toTriangles fgPoints (map V.convert fgHull)) (toTriangles bgPoints (map V.convert bgHull)) >>= continue
-                            Right e -> putStrLn $ errorMessage e
-                    Right e -> putStrLn $ errorMessage e
+    w `on` keyPressEvent $ eventKeyName >>= liftIO . keyPressed continue pb fgs bgs >> return True
 
-            _ -> liftIO $ print "Only f, b, and c keys are supported."
-        return True
+keyPressed continue pb fgs bgs "f" = readIORef fgs >>= print
+keyPressed continue pb fgs bgs "b" = readIORef bgs >>= print
+keyPressed continue pb fgs bgs "c" = do
+    let colsToHull colsRef = do
+        cols <- readIORef colsRef
+        let rgbaToColorList (r, g, b, a) = map (\c -> fromIntegral c / 255) [r, g, b]
+        let points = V.fromList $ map (V.fromList . rgbaToColorList) $ S.toList cols
+        return $ (V.map (\v -> V3.Vec (v V.! 0) (v V.! 1) (v V.! 2)) points, qhull' points)
+    (fgPoints, fgm) <- colsToHull fgs
+    case fgm of
+        Left fgHull -> do
+            (bgPoints, bgm) <- colsToHull bgs
+            case bgm of
+                Left bgHull -> do
+                    subtractBG pb (toTriangles fgPoints (map V.convert fgHull)) (toTriangles bgPoints (map V.convert bgHull)) >>= continue
+                Right e -> putStrLn $ errorMessage e
+        Right e -> putStrLn $ errorMessage e
+keyPressed continue pb fgs bgs _ = print "Only f, b, and c keys are supported."
 
 subtractBG :: Pixbuf -> [Triangle] -> [Triangle] -> IO Pixbuf
 subtractBG pb fgHull bgHull = do
